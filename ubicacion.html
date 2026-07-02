@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relevamiento Social - Ubicación</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 40px 20px; }
+    button { font-size: 18px; padding: 12px 24px; margin-top: 20px; cursor: pointer; }
+    #msg { margin-top: 20px; color: #555; }
+    #fallback { margin-top: 16px; display: none; }
+  </style>
+</head>
+<body>
+  <h2>Relevamiento Social - Chaco 2026</h2>
+  <p>Necesitamos tu ubicación para continuar con la encuesta.</p>
+  <button onclick="pedirUbicacion()">Compartir ubicación y continuar</button>
+  <p id="msg"></p>
+  <!-- Fallback: si el navegador bloquea el redirect por JS, se muestra este link -->
+  <p id="fallback"><a id="linkForm" target="_top" href="#">Tocá acá para abrir la encuesta</a></p>
+
+  <script>
+    // Constantes inline (antes inyectadas por Apps Script vía template)
+    const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScvDLVsimBkWWarvMrU3Cr-7euTDV434alYGKLVrwAluaryhg/viewform';
+    const entryId = '800935116';
+
+    function pedirUbicacion() {
+      document.getElementById('msg').innerText = 'Obteniendo ubicación...';
+      if (!navigator.geolocation) { irSinUbicacion('Este dispositivo no soporta geolocalización.'); return; }
+      navigator.geolocation.getCurrentPosition(exito, error, {
+        timeout: 10000,
+        enableHighAccuracy: true  // agregado: mejor precisión para trabajo de campo
+      });
+    }
+
+    function exito(pos) {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lon = pos.coords.longitude.toFixed(6);
+      const url = formUrl + '?entry.' + entryId + '=' + encodeURIComponent(lat + ',' + lon) + '&usp=pp_url';
+      irAlForm(url);
+    }
+
+    function error(err) {
+      irSinUbicacion('No se pudo obtener la ubicación (' + err.message + '). Continuando sin ella.');
+    }
+
+    function irSinUbicacion(mensaje) {
+      document.getElementById('msg').innerText = mensaje;
+      setTimeout(function() { irAlForm(formUrl); }, 2500);
+    }
+
+    function irAlForm(url) {
+      // Fallback visible por si el redirect automático es bloqueado
+      const link = document.getElementById('linkForm');
+      link.href = url;
+      document.getElementById('fallback').style.display = 'block';
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>
